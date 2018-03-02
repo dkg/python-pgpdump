@@ -421,12 +421,9 @@ class PublicKeyPacket(Packet, AlgoLookup):
             self.prime, offset = get_mpi(self.data, offset)
             self.group_gen, offset = get_mpi(self.data, offset)
             self.key_value, offset = get_mpi(self.data, offset)
-        elif 100 <= self.raw_pub_algorithm <= 110:
-            # Private/Experimental algorithms, just move on
-            pass
         else:
-            raise PgpdumpException("Unsupported public key algorithm %d" %
-                    self.raw_pub_algorithm)
+            # If we don't know how to handle the algorithm, just move on
+            pass
 
         return offset
 
@@ -610,12 +607,9 @@ class SecretKeyPacket(PublicKeyPacket):
             self.pub_algorithm_type = "elg"
             # x
             self.exponent_x, offset = get_mpi(self.data, offset)
-        elif 100 <= self.raw_pub_algorithm <= 110:
-            # Private/Experimental algorithms, just move on
-            pass
         else:
-            raise PgpdumpException("Unsupported public key algorithm %d" %
-                    self.raw_pub_algorithm)
+            # If we don't know how to handle the algorithm, just move on
+            pass
 
         return offset
 
