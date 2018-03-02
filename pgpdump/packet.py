@@ -46,6 +46,7 @@ class AlgoLookup(object):
         19: "ECDSA",
         20: "Formerly ElGamal Encrypt or Sign",
         21: "Diffie-Hellman",
+        22: "EdDSA",
     }
 
     @classmethod
