@@ -576,7 +576,7 @@ class SecretKeyPacket(PublicKeyPacket):
                             "Unsupported GnuPG S2K extension, encountered mode %d" % mode)
             else:
                 raise PgpdumpException(
-                        "Unsupported public key algorithm %d" % s2k_type_id)
+                        "Unsupported S2K algorithm %d" % s2k_type_id)
 
             if s2k_length != (offset - offset_before_s2k):
                 raise PgpdumpException(
