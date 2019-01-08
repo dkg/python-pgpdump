@@ -144,6 +144,7 @@ class SignatureSubpacket(object):
         30: "Features",
         31: "Signature Target",
         32: "Embedded Signature",
+        33: "Issuer Fingerprint",
     }
 
     @property
@@ -173,6 +174,8 @@ class SignaturePacket(Packet, AlgoLookup):
         self.raw_expiration_time = None
         self.expiration_time = None
         self.key_id = None
+        self.fingerprint = None
+        self.fingerprint_version = None
         self.hash2 = None
         self.subpackets = []
         super(SignaturePacket, self).__init__(*args, **kwargs)
@@ -276,6 +279,9 @@ class SignaturePacket(Packet, AlgoLookup):
                 self.raw_expiration_time = get_int4(subpacket.data, 0)
             elif subpacket.subtype == 16:
                 self.key_id = get_key_id(subpacket.data, 0)
+            elif subpacket.subtype == 33:
+                self.fingerprint_version = int(subpacket.data[0])
+                self.fingerprint = get_hex_data(subpacket.data, 1, len(subpacket.data))
             offset += sub_len
             self.subpackets.append(subpacket)
 
