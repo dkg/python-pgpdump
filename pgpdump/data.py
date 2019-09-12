@@ -23,13 +23,15 @@ class BinaryData(object):
         self.data = data
         self.length = len(data)
 
-    def packets(self):
-        '''A generator function returning PGP data packets.'''
+    def packets(self, skip=False):
+        '''A generator function returning PGP data packets.
+        if skip=True, failing packets will log an error instead of raising an exception.'''
         offset = 0
         while offset < self.length:
-            total_length, packet = construct_packet(self.data, offset)
+            total_length, packet = construct_packet(self.data, offset, skip)
             offset += total_length
-            yield packet
+            if packet is not None:
+                yield packet
 
     def __repr__(self):
         return "<%s: length %d>" % (

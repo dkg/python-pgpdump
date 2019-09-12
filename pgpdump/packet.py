@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 import hashlib
 from math import ceil, log
 import re
+import logging
 
 from .utils import (PgpdumpException, get_int2, get_int4, get_mpi,
         get_key_id, get_hex_data, get_int_bytes, pack_data)
@@ -821,10 +822,16 @@ def old_tag_length(data, start):
     return (offset, length)
 
 
-def construct_packet(data, header_start):
+def construct_packet(data, header_start, skip=False):
     '''Returns a (length, packet) tuple constructed from 'data' at index
     'header_start'. If there is a next packet, it will be found at
-    header_start + length.'''
+    header_start + length.
+
+    If skip=True, then a packet with an error will emit a warning (via
+    the logging module) and return None as the packet; otherwise the
+    error will be raised directly.
+
+    '''
 
     # tag encoded in bits 5-0 (new packet format)
     # 0x3f == 111111b
@@ -871,5 +878,13 @@ def construct_packet(data, header_start):
                     data, header_start)
         else:
             break
-    packet = PacketType(tag, name, new, packet_data)
+    packet = None
+    try:
+        packet = PacketType(tag, name, new, packet_data)
+    except PgpdumpException as e:
+        if skip:
+            # FIXME: assmeble the packet structure and add it to the warning in ascii-armored form
+            logging.warning(e)
+        else:
+            raise
     return (consumed, packet)
