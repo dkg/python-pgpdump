@@ -92,6 +92,8 @@ def get_mpi(data, offset):
     mpi_len = get_int2(data, offset)
     offset += 2
     to_process = (mpi_len + 7) // 8
+    if to_process > (len(data) - offset):
+        raise PgpdumpException("MPI wants %s octets, but buffer has only %s left"%(to_process, len(data) - offset))
     mpi = 0
     i = -4
     for i in range(0, to_process - 3, 4):
