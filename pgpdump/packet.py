@@ -683,10 +683,16 @@ class UserAttributePacket(Packet):
             # there is only one currently known type- images (1)
             if sub_type == 1:
                 # the only little-endian encoded value in OpenPGP
+                if len(self.data) <= (offset + 3):
+                    raise PgpdumpException("Needs 4-octet attribute header at position %d of packet size %d"%(offset, len(self.data)))
                 hdr_size = self.data[offset] + (self.data[offset + 1] << 8)
                 hdr_version = self.data[offset + 2]
                 self.raw_image_format = self.data[offset + 3]
+                if len(self.data) <= (offset + hdr_size):
+                    raise PgpdumpException("Claimed attribute header has %d octets at position %d of packet size %d"%(hdr_size, offset, len(self.data)))
                 offset += hdr_size
+                # FIXME: ensure that the reserved octets of the header are all-zeros
+                # (see https://tools.ietf.org/html/rfc4880#section-5.12.1)
 
                 self.image_data = self.data[offset:]
                 if self.raw_image_format == 1:
