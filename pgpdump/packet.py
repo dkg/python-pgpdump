@@ -4,7 +4,8 @@ from math import ceil, log
 import re
 import logging
 
-from .utils import (PgpdumpException, get_int2, get_int4, get_mpi,
+from .utils import (PgpdumpException, encode_packet,
+                    get_int2, get_int4, get_mpi,
         get_key_id, get_hex_data, get_int_bytes, pack_data)
 
 
@@ -883,8 +884,7 @@ def construct_packet(data, header_start, skip=False):
         packet = PacketType(tag, name, new, packet_data)
     except PgpdumpException as e:
         if skip:
-            # FIXME: assmeble the packet structure and add it to the warning in ascii-armored form
-            logging.warning(e)
+            logging.warning(str(e) + '\n' + encode_packet(tag, new, packet_data, armored=True))
         else:
             raise
     return (consumed, packet)

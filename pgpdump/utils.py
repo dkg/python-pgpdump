@@ -1,5 +1,7 @@
 import binascii
 import sys
+import codecs
+from base64 import b64encode
 
 PY26 = sys.version_info[0] == 2 and sys.version_info[1] <= 6
 
@@ -93,6 +95,51 @@ def get_int8(data, offset):
             offset, len(data)))
     return (get_int4(data, offset) << 32) + get_int4(data, offset + 4)
 
+
+def encode_packet(tag, new, data, armored=False):
+    if tag > 0x0f and not new:
+        raise PgpdumpException("cannot make new packet with tag %d"%(tag))
+    hdr = bytearray()
+    if new:
+        hdr += bytearray([0xc0|tag])
+        if len(data) < 192:
+            hdr += bytearray([len(data)])
+        elif len(data) < 8384:
+            i = len(data) - 192
+            hdr += bytearray([i//256, i%256])
+        else:
+            i = len(data)
+            hdr += bytearray([256, i >> 24, (i>>16)&0xff, (i>>8)&0xff, i&0xff])
+    else: # old-style packet format
+        if len(data) < (1<<8):
+            hdr += bytearray([0x80|(tag <<2), len(data)])
+        elif len(data) < (1<<16):
+            hdr += bytearray([0x80|(tag <<2)|1,
+                              (len(data)>>8)&0xff,
+                              len(data)&0xff])
+        elif len(data) < (1<<32):
+            hdr += bytearray([0x80|(tag <<2)|2,
+                              (len(data)>>24)&0xff,
+                              (len(data)>>16)&0xff,
+                              (len(data)>>8)&0xff,
+                              len(data)&0xff])
+        else:
+            raise NotImplementedError('packet of length %d, but we do not generate indeterminate-sized packets'%(len(data),))
+    frame = hdr + data
+    if not armored:
+        return frame
+    else:
+        strdata = codecs.decode(b64encode(frame), 'ascii')
+        return '''-----BEGIN PGP {block}-----
+
+{body}
+={crc}
+-----END PGP {block}-----
+'''.format(block={2: 'SIGNATURE', 6: 'KEY BLOCK'}.get(tag, 'MESSAGE'),
+           body='\n'.join([strdata[i:i+64] for i in range(0, len(strdata), 64)]),
+           crc=codecs.decode(b64encode(crc24(frame).to_bytes(3, 'big')), 'ascii'))
+        
+            
 
 def get_mpi(data, offset):
     '''Gets a multi-precision integer as per RFC-4880.
