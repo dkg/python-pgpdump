@@ -773,6 +773,8 @@ def new_tag_length(data, start):
     look. Returns a derived (offset, length, partial) tuple.
     Reference: http://tools.ietf.org/html/rfc4880#section-4.2.2
     '''
+    if len(data) <= start:
+        raise PgpdumpException("new_tag_length at start %d of packet of length %d"%(start, len(data)))
     first = data[start]
     offset = length = 0
     partial = False
